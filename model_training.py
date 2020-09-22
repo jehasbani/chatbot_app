@@ -20,7 +20,7 @@ intents = json.loads(data_file)
 
 # Tokenization
 for intent in intents['intents']:
-    for pattern in intents['patterns']:
+    for pattern in intent['patterns']:
         w = nltk.word_tokenize(pattern)
         words.extend(w)
         documents.append([w, intent['tag']])
@@ -46,7 +46,8 @@ output_empty = [0] * len(classes)
 
 for doc in documents:
     bag = []
-    pattern_words = [lemmatizer.lemmatize(w.lower()) for w in pattern_words if w not in ignore_words]
+    pattern_words = doc[0]
+    pattern_words = [lemmatizer.lemmatize(w.lower()) for w in pattern_words]
     for w in words:
         bag.append(1) if w in pattern_words else bag.append(0)
 
@@ -55,7 +56,9 @@ for doc in documents:
 
     training.append([bag, output_row])
 
-training = np.array(random.shuffle(training))
+random.shuffle(training)
+training = np.array(training)
+print(training.shape)
 
 X_train = list(training[:, 0])
 y_train = list(training[:, 1])
@@ -77,18 +80,19 @@ hist = model.fit(np.array(X_train), np.array(y_train), epochs=200, batch_size=5,
 model.save('chatbot_model.h5', hist)
 
 # plot training curves
-plt.plot(hist.hist['accuracy'])
-plt.title('model accuracy')
-plt.ylabel('accuracy')
-plt.xlabel('epoch')
-plt.legend(['train', 'valid'], loc='upper left')
-plt.show()
+fig, (ax0, ax1) = plt.subplots(ncols=2, constrained_layout=True)
 
-plt.plot(hist.hist['loss'])
-plt.title('model loss')
-plt.ylabel('loss')
-plt.xlabel('epoch')
-plt.legend(['train', 'valid'], loc='upper left')
+ax0.plot(hist.history['accuracy'])
+ax0.set_title('Model accuracy')
+ax0.set_ylabel('accuracy')
+ax0.set_xlabel('epoch')
+ax0.legend(['train', 'valid'], loc='upper left')
+
+ax1.plot(hist.history['loss'])
+ax1.set_title('Model loss')
+ax1.set_ylabel('loss')
+ax1.set_xlabel('epoch')
+ax1.legend(['train', 'valid'], loc='upper left')
 plt.show()
 
 print('Model created.')
